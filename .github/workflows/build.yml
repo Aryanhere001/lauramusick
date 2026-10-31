@@ -19,22 +19,23 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Extract Zip
+      - name: Extract Source Code
         run: |
-          unzip -q -o app-source.zip -d extracted/
+          unzip -q -o app-source.zip -d .
+          ls -la
 
-      - name: Fix Missing XML & Build
+      - name: Fix Missing XML Resources
         run: |
-          # Seedha actual android-project folder par jao
-          cd extracted/myapp/android-project || cd extracted/*/android-project || cd $(find extracted -type d -name "android-project" | head -n 1)
-
-          # Missing XML rules create karo (agar manifest mangta hai)
           mkdir -p app/src/main/res/xml
           echo '<?xml version="1.0" encoding="utf-8"?><data-extraction-rules><cloud-backup><include domain="root" path="."/></cloud-backup><device-transfer><include domain="root" path="."/></device-transfer></data-extraction-rules>' > app/src/main/res/xml/data_extraction_rules.xml
           echo '<?xml version="1.0" encoding="utf-8"?><full-backup-content><include domain="file" path="."/></full-backup-content>' > app/src/main/res/xml/backup_rules.xml
+          echo "XML rules injected successfully into app/src/main/res/xml"
 
-          # Gradle wrapper generate karo aur build run karo
-          gradle wrapper
+      - name: Build Debug APK
+        run: |
+          if [ ! -f gradlew ]; then
+            gradle wrapper
+          fi
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon --stacktrace
 
@@ -42,4 +43,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
-          path: "**/build/outputs/apk/debug/*.apk"
+          path: app/build/outputs/apk/debug/*.apk
