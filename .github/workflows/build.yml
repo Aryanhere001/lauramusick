@@ -23,35 +23,14 @@ jobs:
         run: |
           unzip -q -o app-source.zip -d .
 
-      - name: Fix Missing XML Resources
+      - name: Create Missing Resource Files
         run: |
-          # Dhoondho jahan app module ka res folder hai
           RES_DIR=$(find . -type d -path "*/src/main/res" | head -n 1)
           if [ -n "$RES_DIR" ]; then
             mkdir -p "$RES_DIR/xml"
-            
-            # Missing data_extraction_rules.xml create karo
-            cat << 'EOF' > "$RES_DIR/xml/data_extraction_rules.xml"
-<?xml version="1.0" encoding="utf-8"?>
-<data-extraction-rules>
-    <cloud-backup>
-        <include domain="root" path="."/>
-    </cloud-backup>
-    <device-transfer>
-        <include domain="root" path="."/>
-    </device-transfer>
-</data-extraction-rules>
-EOF
-
-            # Missing backup_rules.xml create karo
-            cat << 'EOF' > "$RES_DIR/xml/backup_rules.xml"
-<?xml version="1.0" encoding="utf-8"?>
-<full-backup-content>
-    <include domain="file" path="."/>
-</full-backup-content>
-EOF
-
-            echo "Fixed missing XML rules in: $RES_DIR/xml"
+            echo '<?xml version="1.0" encoding="utf-8"?><data-extraction-rules><cloud-backup><include domain="root" path="."/></cloud-backup><device-transfer><include domain="root" path="."/></device-transfer></data-extraction-rules>' > "$RES_DIR/xml/data_extraction_rules.xml"
+            echo '<?xml version="1.0" encoding="utf-8"?><full-backup-content><include domain="file" path="."/></full-backup-content>' > "$RES_DIR/xml/backup_rules.xml"
+            echo "Successfully generated XML resources in $RES_DIR/xml"
           fi
 
       - name: Build Debug APK
@@ -60,7 +39,6 @@ EOF
             gradle wrapper
           fi
           chmod +x gradlew
-
           ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK Artifact
