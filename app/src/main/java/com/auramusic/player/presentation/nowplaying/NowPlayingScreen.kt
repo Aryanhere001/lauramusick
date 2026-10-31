@@ -406,19 +406,19 @@ fun LyricsSheet(accentColor: Color) {
             color = accentColor
         )
         Text(
-            text = "Walking through the neon rain
+            text = """Walking through the neon rain
 Electric city lights glow again
 Feel the bassline take control
-Echoing through my restless soul...",
+Echoing through my restless soul...""",
             fontSize = 16.sp,
             lineHeight = 26.sp,
             color = Color.White.copy(alpha = 0.85f)
         )
         Text(
-            text = "High frequencies fade away
+            text = """High frequencies fade away
 Into the twilight of the day
 Crossfade to another groove
-Nothing left for us to prove.",
+Nothing left for us to prove.""",
             fontSize = 16.sp,
             lineHeight = 26.sp,
             color = Color.White.copy(alpha = 0.6f)
