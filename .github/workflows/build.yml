@@ -19,25 +19,22 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Extract Source Code
+      - name: Extract Zip
         run: |
-          unzip -q -o app-source.zip -d .
+          unzip -q -o app-source.zip -d extracted/
 
-      - name: Create Missing Resource Files
+      - name: Fix Missing XML & Build
         run: |
-          RES_DIR=$(find . -type d -path "*/src/main/res" | head -n 1)
-          if [ -n "$RES_DIR" ]; then
-            mkdir -p "$RES_DIR/xml"
-            echo '<?xml version="1.0" encoding="utf-8"?><data-extraction-rules><cloud-backup><include domain="root" path="."/></cloud-backup><device-transfer><include domain="root" path="."/></device-transfer></data-extraction-rules>' > "$RES_DIR/xml/data_extraction_rules.xml"
-            echo '<?xml version="1.0" encoding="utf-8"?><full-backup-content><include domain="file" path="."/></full-backup-content>' > "$RES_DIR/xml/backup_rules.xml"
-            echo "Successfully generated XML resources in $RES_DIR/xml"
-          fi
+          # Seedha actual android-project folder par jao
+          cd extracted/myapp/android-project || cd extracted/*/android-project || cd $(find extracted -type d -name "android-project" | head -n 1)
 
-      - name: Build Debug APK
-        run: |
-          if [ ! -f gradlew ]; then
-            gradle wrapper
-          fi
+          # Missing XML rules create karo (agar manifest mangta hai)
+          mkdir -p app/src/main/res/xml
+          echo '<?xml version="1.0" encoding="utf-8"?><data-extraction-rules><cloud-backup><include domain="root" path="."/></cloud-backup><device-transfer><include domain="root" path="."/></device-transfer></data-extraction-rules>' > app/src/main/res/xml/data_extraction_rules.xml
+          echo '<?xml version="1.0" encoding="utf-8"?><full-backup-content><include domain="file" path="."/></full-backup-content>' > app/src/main/res/xml/backup_rules.xml
+
+          # Gradle wrapper generate karo aur build run karo
+          gradle wrapper
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon --stacktrace
 
@@ -45,4 +42,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: "**/build/outputs/apk/debug/*.apk"
