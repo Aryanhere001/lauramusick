@@ -22,18 +22,45 @@ jobs:
       - name: Extract Source Code
         run: |
           unzip -q -o app-source.zip -d .
-          ls -la
+
+      - name: Fix Missing XML Resources
+        run: |
+          # Dhoondho jahan app module ka res folder hai
+          RES_DIR=$(find . -type d -path "*/src/main/res" | head -n 1)
+          if [ -n "$RES_DIR" ]; then
+            mkdir -p "$RES_DIR/xml"
+            
+            # Missing data_extraction_rules.xml create karo
+            cat << 'EOF' > "$RES_DIR/xml/data_extraction_rules.xml"
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+        <include domain="root" path="."/>
+    </cloud-backup>
+    <device-transfer>
+        <include domain="root" path="."/>
+    </device-transfer>
+</data-extraction-rules>
+EOF
+
+            # Missing backup_rules.xml create karo
+            cat << 'EOF' > "$RES_DIR/xml/backup_rules.xml"
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <include domain="file" path="."/>
+</full-backup-content>
+EOF
+
+            echo "Fixed missing XML rules in: $RES_DIR/xml"
+          fi
 
       - name: Build Debug APK
         run: |
-          # Missing gradlew generate karo
           if [ ! -f gradlew ]; then
-            echo "Generating Gradle wrapper..."
             gradle wrapper
           fi
           chmod +x gradlew
 
-          # Debug APK build
           ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK Artifact
