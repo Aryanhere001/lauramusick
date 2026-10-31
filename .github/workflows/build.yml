@@ -22,14 +22,22 @@ jobs:
       - name: Extract Source Code
         run: |
           unzip -q -o app-source.zip -d .
-          ls -la
 
-      - name: Fix Missing XML Resources
+      - name: Auto-Patch Manifest and Resources
         run: |
+          # 1. Missing XML files create karo
           mkdir -p app/src/main/res/xml
           echo '<?xml version="1.0" encoding="utf-8"?><data-extraction-rules><cloud-backup><include domain="root" path="."/></cloud-backup><device-transfer><include domain="root" path="."/></device-transfer></data-extraction-rules>' > app/src/main/res/xml/data_extraction_rules.xml
           echo '<?xml version="1.0" encoding="utf-8"?><full-backup-content><include domain="file" path="."/></full-backup-content>' > app/src/main/res/xml/backup_rules.xml
-          echo "XML rules injected successfully into app/src/main/res/xml"
+
+          # 2. Agar Manifest me rules abhi bhi tang karein toh attributes safe karo
+          if [ -f app/src/main/AndroidManifest.xml ]; then
+            sed -i 's/android:dataExtractionRules="@xml\/data_extraction_rules"//g' app/src/main/AndroidManifest.xml
+            sed -i 's/android:fullBackupContent="@xml\/backup_rules"//g' app/src/main/AndroidManifest.xml
+          fi
+
+          # 3. Suppress compileSdk 35 warning
+          echo "android.suppressUnsupportedCompileSdk=35" >> gradle.properties
 
       - name: Build Debug APK
         run: |
@@ -37,7 +45,7 @@ jobs:
             gradle wrapper
           fi
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug --no-daemon --info || ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
